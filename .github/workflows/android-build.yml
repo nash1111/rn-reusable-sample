@@ -16,6 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@main
         with:
@@ -24,19 +30,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Setup EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Install EAS CLI
-        run: bun add -g eas-cli
-
-      - name: Initialize EAS project
-        run: bunx eas init --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -48,10 +43,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build Android App
-        run: bunx eas build --platform android --profile local --non-interactive --local
+      - name: Generate Android project
+        run: |
+          bunx expo prebuild --platform android --clean
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+
+      - name: Build Android APK
+        run: |
+          cd android
+          ./gradlew assembleRelease
+        env:
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
 
       - name: Find APK files
         id: find-apk
@@ -67,6 +70,4 @@ jobs:
           name: android-app
           path: |
             ./android/app/build/outputs/apk/release/*.apk
-            ./build/**/*.apk
-            ./**/*.apk
           retention-days: 7

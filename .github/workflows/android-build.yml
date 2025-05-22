@@ -16,14 +16,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@main
         with:
-          node-version: 20
-          cache: 'npm'
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm ci
+        run: bun install
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -32,7 +31,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install EAS CLI
-        run: npm install -g eas-cli
+        run: bun add -g eas-cli
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -45,7 +44,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Build Android App
-        run: npx eas build --platform android --profile local --non-interactive --local
+        run: bunx eas build --platform android --profile local --non-interactive --local
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 

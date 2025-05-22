@@ -33,6 +33,11 @@ jobs:
       - name: Install EAS CLI
         run: bun add -g eas-cli
 
+      - name: Initialize EAS project
+        run: bunx eas init --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
@@ -48,9 +53,20 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Find APK files
+        id: find-apk
+        run: |
+          echo "Finding APK files..."
+          find . -name "*.apk" -type f | tee apk-files.txt
+          echo "APK files found:"
+          cat apk-files.txt
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-app
-          path: ./android/app/build/outputs/apk/release/*.apk
+          path: |
+            ./android/app/build/outputs/apk/release/*.apk
+            ./build/**/*.apk
+            ./**/*.apk
           retention-days: 7

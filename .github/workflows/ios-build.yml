@@ -16,12 +16,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@main
         with:
@@ -31,8 +25,7 @@ jobs:
         run: bun install
 
       - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
+        run: sudo gem install cocoapods
           
       - name: Cache CocoaPods
         uses: actions/cache@v4
@@ -43,8 +36,7 @@ jobs:
             ${{ runner.os }}-pods-
 
       - name: Generate iOS project
-        run: |
-          bunx expo prebuild --platform ios --clean
+        run: bunx expo prebuild --platform ios --clean
 
       - name: Install Pod dependencies
         run: |
@@ -56,29 +48,6 @@ jobs:
           cd ios
           xcodebuild -workspace rn-reusable-sample.xcworkspace -scheme rn-reusable-sample -configuration Release -archivePath ./build/app.xcarchive archive CODE_SIGNING_ALLOWED=NO
           xcodebuild -exportArchive -archivePath ./build/app.xcarchive -exportOptionsPlist ../exportOptions.plist -exportPath ./build || true
-          
-      - name: Create exportOptions.plist if not exists
-        run: |
-          if [ ! -f "exportOptions.plist" ]; then
-            echo "Creating exportOptions.plist file"
-            cat > exportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>teamID</key>
-              <string>YOUR_TEAM_ID</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-          </dict>
-          </plist>
-          EOF
-            
-            cd ios
-            xcodebuild -exportArchive -archivePath ./build/app.xcarchive -exportOptionsPlist ../exportOptions.plist -exportPath ./build || true
-          fi
 
       - name: Find IPA files
         id: find-ipa
@@ -103,5 +72,4 @@ jobs:
           name: ios-app
           path: |
             ./ios/build/*.ipa
-            ./ios/build/app.xcarchive/Products/Applications/*.app
           retention-days: 7
